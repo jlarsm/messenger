@@ -8,10 +8,11 @@
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #users {position: relative; float:right; background-color: #bac3c6; border-width: 2px; border-style:solid; padding-right:20vw; padding-bottom: 86vw;}
-      #messagewindow{overflow-y: auto; max-height:600px;}
-      #userlist {text-align: left; list-style-type:none;position:absolute; }
-      #messages { list-style-type: none; margin: 0; padding: 0; color:white;}
+      #users {position: relative; float:right; background-color: #bac3c6; border-width: 2px; border-style:solid; width:20%; height:100vh; display:inline-block; }
+
+      #messagewindow{display:flex; flex:1 auto;}
+      #userlist {text-align: left; list-style-type:none; position:fixed;}
+      #messages { list-style-type: none; color:white; position:absolute; bottom:0; margin-bottom: 40px; width:80%;overflow-y:auto; max-height: 95vh; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #383830; }
     </style>
@@ -20,6 +21,7 @@
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
   <script>
     $(function () {
+      var clientSocket=''
       var socket = io();
       $('form').submit(function(e){
         e.preventDefault(); // prevents page reloading
@@ -27,19 +29,81 @@
         $('#m').val('');
         return false;
       });
-      socket.on('chat message', function(msg){
+      socket.on('connect', function(){
+        console.log("socket ID:")
+        console.log(socket.id);
+        if(document.cookie === ""){
+          var username = 'user-'+socket.id.substring(0,9);
+          document.cookie = socket.id+"="+username;
+        }
+        var userId = document.cookie.split('=')[0];
+        var username = document.cookie.split('=')[1];
+        console.log(userId);
+        socket.emit('get user',userId,username);
+        socket.emit('connected');
+        console.log("cookie:");
+        console.log(document.cookie);
+        
+      });
+      socket.on('update messages', function(time,socketid,currentuser,msg,color,socket){
+          console.log("socket from server\n"+socket);
+          console.log("current socket: \n"+socket.id);
+        if(socket === socket.id){
+          if(socketid === socket.id){
+            var usernamecolored = "<b><span style='color:"+color+"'>"+currentuser+"</span></b>";
+          }
+          else{
+            var usernamecolored = "<span style='color:"+color+"'>"+currentuser+"</span>";
+          }
+          $('#messages').append($('<li>'+time+' '+usernamecolored+': '+msg+'</li>'));
+        }
+      });
+      socket.on('change username', function(uid,username){
+          document.cookie = uid+"="+username;
+          console.log(document.cookie);
+      });
+      socket.on('update messages', function(msg){
+          $('#messages').append($(msg));
+      });
+      socket.on('chat message', function(time,socketid,currentuser,msg,color){
+        if(socketid === socket.id){
+          var usernamecolored = "<b><span style='color:"+color+"'>"+currentuser+"</span></b>";
+        }
+        else{
+          var usernamecolored = "<span style='color:"+color+"'>"+currentuser+"</span>";
+        }
+        $('#messages').append($('<li>'+time+' '+usernamecolored+': '+msg+'</li>'));
+      });
+      socket.on('server message', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
       socket.on('new username', function(username){
-        console.log("here")
+        console.log("here");
         $('#userlist').append($('<li>').text(username));
       });
-
+      socket.on('update userlist', function(users){
+        console.log(users);
+        var userobject = JSON.parse(users);
+        console.log(userobject);
+        var keys = Object.keys(userobject);
+        $('#userlist').empty();
+        for(var i=0; i<keys.length; i++){
+          var key = keys[i];
+          console.log(userobject)
+          if(key === socket.id){
+            $('#userlist').append($('<li><b>'+userobject[key]+'</b> <-- you<li>'));
+          }
+          else{
+            $('#userlist').append($('<li>'+userobject[key]+'<li>'));
+          }
+        }
+      });
     });
   </script>
   <body>
     <div id=users>
-      <ul id=userlist><li>Users Online 🔵</li></ul>
+      <h4>Users Online 🔵</h4>
+      <ul id=userlist></ul>
     </div>
     <div id=messagewindow>
       <ul id="messages"></ul>
