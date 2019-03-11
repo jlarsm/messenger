@@ -15,7 +15,6 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
     console.log('a user connected');
-    console.log(socket.key);
     var userId ='';
     socket.on('connected', function(){
         for(var i=0;i<messages.length;i++){
@@ -23,16 +22,13 @@ io.on('connection', function(socket){
         }
     });
     socket.on('get user', function(uid,username){
-        console.log(socket.id);
         userId=uid;
         if(uid in users){
-            console.log("yes its in here");
             users[socket.id] = username;
             colors[socket.id] = colors[uid];
             usersocket[socket.id] = uid;
         }
         else{
-            console.log("nope not in here");
             users[socket.id]= username;
             colors[uid] = '#ffffff';
         }
@@ -52,7 +48,6 @@ io.on('connection', function(socket){
     });
     socket.on('chat message', function(msg){
         var currentdate = new Date();
-        console.log(userId);
         var time = currentdate.getHours() + ":" 
         + currentdate.getMinutes() + ":" 
         + currentdate.getSeconds() + ' ';
@@ -82,21 +77,17 @@ io.on('connection', function(socket){
             var usernamecolor = msg.split('/nickcolor ');
             var hexcheck = /([0-9A-F]{6}$)|([0-9A-F]{3}$)/i.test(usernamecolor);
             if(hexcheck){
-                console.log(colors);
                 colors[socket.id] = '#'+usernamecolor[1];
             }
             else{
-                console.log("bad dog!")
+                console.log("Incorrect color");
             }
         }
         else{
-            console.log(msg);
             var currentuser = users[socket.id];
             var socketid = socket.id;
             var color = colors[socket.id];
-            console.log(color);
             var array = [time,socketid,currentuser,msg,color];
-            console.log(array);
             messages.push(array);
             io.emit('chat message', time,socketid,currentuser,msg,color);
         }

@@ -33,7 +33,6 @@
       });
       socket.on('connect', function(){
         if(Cookies.get('username') === undefined){
-          window.alert("noCookies");
           var username = 'user-'+socket.id.substring(0,9);
           Cookies.set('username',username); 
         }
@@ -48,11 +47,6 @@
         
       });
       socket.on('update messages', function(time,socketid,currentuser,msg,color,socket){
-        if(socket === socket.id){
-          alert("this is the right socket");
-        }
-          console.log("socket from server\n"+socket);
-          console.log("current socket: \n"+socket.id);
           if(socketid === socket.id){
             var usernamecolored = "<b><span style='color:"+color+"'>"+currentuser+"</span></b>";
           }
@@ -79,19 +73,15 @@
       });
       
       socket.on('new username', function(username){
-        console.log("here");
         $('#userlist').append($('<li>').text(username));
       });
 
       socket.on('update userlist', function(users){
-        console.log(users);
         var userobject = JSON.parse(users);
-        console.log(userobject);
         var keys = Object.keys(userobject);
         $('#userlist').empty();
         for(var i=0; i<keys.length; i++){
           var key = keys[i];
-          console.log(userobject)
           if(key === socket.id){
             $('#userlist').append($('<li><b>'+userobject[key]+'</b> <-- you<li>'));
           }
