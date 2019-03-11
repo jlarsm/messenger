@@ -17,8 +17,10 @@
       #messages li:nth-child(odd) { background: #383830; }
     </style>
   </head>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  
   <script>
     $(function () {
       var clientSocket=''
@@ -30,25 +32,27 @@
         return false;
       });
       socket.on('connect', function(){
-        console.log("socket ID:")
-        console.log(socket.id);
-        if(document.cookie === ""){
+        if(Cookies.get('username') === undefined){
+          window.alert("noCookies");
           var username = 'user-'+socket.id.substring(0,9);
-          document.cookie = socket.id+"="+username;
+          Cookies.set('username',username); 
         }
-        var userId = document.cookie.split('=')[0];
-        var username = document.cookie.split('=')[1];
-        console.log(userId);
-        socket.emit('get user',userId,username);
+        else{
+          var username = Cookies.get('username');
+        }
+        console.log(Cookies.get('username'));
+        
+        socket.emit('get user',socket.id,username);
         socket.emit('connected');
-        console.log("cookie:");
-        console.log(document.cookie);
+        
         
       });
       socket.on('update messages', function(time,socketid,currentuser,msg,color,socket){
+        if(socket === socket.id){
+          alert("this is the right socket");
+        }
           console.log("socket from server\n"+socket);
           console.log("current socket: \n"+socket.id);
-        if(socket === socket.id){
           if(socketid === socket.id){
             var usernamecolored = "<b><span style='color:"+color+"'>"+currentuser+"</span></b>";
           }
@@ -56,31 +60,29 @@
             var usernamecolored = "<span style='color:"+color+"'>"+currentuser+"</span>";
           }
           $('#messages').append($('<li>'+time+' '+usernamecolored+': '+msg+'</li>'));
-        }
       });
       socket.on('change username', function(uid,username){
-          document.cookie = uid+"="+username;
-          console.log(document.cookie);
+          Cookies.set('username',username);
       });
-      socket.on('update messages', function(msg){
-          $('#messages').append($(msg));
-      });
+      
       socket.on('chat message', function(time,socketid,currentuser,msg,color){
+        var usernamecolored = "<span style='color:"+color+"'>"+currentuser+"</span>";
         if(socketid === socket.id){
-          var usernamecolored = "<b><span style='color:"+color+"'>"+currentuser+"</span></b>";
+            var message = '<b>'+msg+'</b>';
+          
         }
         else{
-          var usernamecolored = "<span style='color:"+color+"'>"+currentuser+"</span>";
+          var message = msg;
+          
         }
-        $('#messages').append($('<li>'+time+' '+usernamecolored+': '+msg+'</li>'));
+        $('#messages').append($('<li>'+time+' '+usernamecolored+': '+message+'</li>'));
       });
-      socket.on('server message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
+      
       socket.on('new username', function(username){
         console.log("here");
         $('#userlist').append($('<li>').text(username));
       });
+
       socket.on('update userlist', function(users){
         console.log(users);
         var userobject = JSON.parse(users);

@@ -19,7 +19,7 @@ io.on('connection', function(socket){
     var userId ='';
     socket.on('connected', function(){
         for(var i=0;i<messages.length;i++){
-            io.emit('update messages',messages[i][0],messages[i][1],messages[i][2],messages[i][3],messages[i][4],socket.id);
+            socket.emit('update messages',messages[i][0],messages[i][1],messages[i][2],messages[i][3],messages[i][4],socket.id);
         }
     });
     socket.on('get user', function(uid,username){
